@@ -127,3 +127,12 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Dataset
+kaggle_dataset/
+kaggle_dataset.zip
+assets/
+
+# Temporary files
+Lab 3 - Edges.ipynb
+Lab 7 - Simple Object Recognition.ipynb
