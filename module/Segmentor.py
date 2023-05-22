@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from ipywidgets import interact
 import ipywidgets as widgets
 import urllib.request
-
+import time
 
 class Segmentor:
     def __init__(
@@ -130,8 +130,12 @@ if __name__ == "__main__":
         suit_x_ratio=2 / 7,
         suit_y_ratio=1 / 5,
     )
-
+    
+    st = time.time()
     cardSuits = segmentor.seg(inputImage)
+    en = time.time()
+    print("time:", en - st)
+    
     # cardResult = segmentor.seg(inputImage, get_suits=False)
 
     for i in range(len(cardSuits)):
