@@ -71,7 +71,7 @@ class Segmentor2:
                 continue
             q, iou = quad(c)
 
-            if len(q) != 4:
+            if q is None or len(q) != 4:
                 continue
             if iou < self.iou_thresh:
                 continue
