@@ -54,7 +54,7 @@ def cardProject(img, quad):
     return timg
 
 class Segmentor2:
-    def __init__(self, iou_thresh=0.75):
+    def __init__(self, iou_thresh=0.95):
         self.iou_thresh = iou_thresh
 
     def seg(self, image):
@@ -67,7 +67,12 @@ class Segmentor2:
         result = []
 
         for i, c in enumerate(valid_contours):
+            if len(c) < 4:
+                continue
             q, iou = quad(c)
+
+            if len(q) != 4:
+                continue
             if iou < self.iou_thresh:
                 continue
             out = cardProject(img, q)
