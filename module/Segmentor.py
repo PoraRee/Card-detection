@@ -97,6 +97,7 @@ class Segmentor:
             # rotate card
             if output.shape[0] < output.shape[1]:
                 output = cv2.rotate(output, cv2.ROTATE_90_CLOCKWISE)
+            output = cv2.resize(output, (80, 100), interpolation=cv2.INTER_AREA)
             result.append(output)
 
         return result
