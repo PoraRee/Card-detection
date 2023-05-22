@@ -114,8 +114,8 @@ class Segmentor:
         
         return [{
             'bbox': corner,
-            'card': result,
-            'suit': suit
+            'card': result, # Cropped image of card
+            'suit': suit # Cropped image of card corner
             } for corner, result, suit in zip(cardCorners, cardResult, cardSuits)] 
 
 
