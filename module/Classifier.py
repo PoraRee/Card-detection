@@ -1,8 +1,11 @@
 import cv2
+import cv2 as cv
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as T
+import os
+import numpy as np
 
 transform = T.Compose([
     T.ToPILImage(),
@@ -61,6 +64,39 @@ class Classifier:
         class_result = self.mapper[result]
 
         return class_result
+
+
+def p(img):
+    x = cv.cvtColor(img, cv.COLOR_RGB2GRAY)
+    _, x = cv.threshold(x, 128, 255, cv.THRESH_BINARY)
+    return x
+
+class Classifier2():
+    TEMPLATE_PATH = "../bicycleimg_cleaned/"
+    
+
+    def get_class(self, inp):
+        out = inp
+        c_score = np.inf
+        c_fn = None
+        c_img = None
+
+        for fn in os.listdir(self.TEMPLATE_PATH):
+            timg = cv.imread(os.path.join(self.TEMPLATE_PATH, fn))
+            timg = cv.cvtColor(timg, cv.COLOR_BGR2RGB)
+            score = np.mean(np.power(p(timg) - p(out), 2))
+            if score < c_score:
+                c_score = score
+                c_fn = fn
+                c_img = timg
+            timg = timg[::-1,:,:]
+            score = np.mean(np.power(p(timg) - p(out), 2))
+            if score < c_score:
+                c_score = score
+                c_fn = fn
+                c_img = timg
+        return c_fn.split('-')[0]
+
 
 if __name__ == "__main__":
     
