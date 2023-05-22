@@ -16,8 +16,8 @@ class Segmentor:
         max_p=400,
         min_a=1000,
         max_a=20000,
-        suit_x_ratio=2 / 7,
-        suit_y_ratio=1 / 5,
+        suit_x_ratio=1 / 2,
+        suit_y_ratio=1 / 2,
     ):
         # For get_card_contour
         self.min_p = min_p
