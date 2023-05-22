@@ -50,23 +50,26 @@ class Segmentor:
             and cv2.contourArea(contour) < self.max_a
         ]
         return cardContours
-
-    def crop_cards(self, cardContours, inputImage):
+    
+    def mark_card_corner(self, cardContours):
         result = []
         for contour in cardContours:
-            convex = cv2.convexHull(contour)  # should be card contour
-            eps = 0.1 * cv2.arcLength(convex, True)
+            convex = cv2.convexHull(contour) # should be card contour
+            eps = 0.1*cv2.arcLength(convex, True)
             approximate_hull = cv2.approxPolyDP(convex, eps, True)
-            # print('bef:', approximate_hull.shape)
             if approximate_hull.shape[0] != 4:
                 continue
-            approximate_hull = np.reshape(approximate_hull, (4, 2))
-            # print('aft:', approximate_hull.shape)
+            approximate_hull = np.reshape(approximate_hull, (4,2))
+            result.append(approximate_hull)
+        return result
 
-            point_A = approximate_hull[0]
-            point_B = approximate_hull[3]
-            point_C = approximate_hull[2]
-            point_D = approximate_hull[1]
+    def crop_cards(self, cardCorners, inputImage):
+        result = []
+        for corner in cardCorners:
+            point_A = corner[0]
+            point_B = corner[3]
+            point_C = corner[2]
+            point_D = corner[1]
 
             AD = self.euc(point_A, point_D)
             BC = self.euc(point_B, point_C)
@@ -76,32 +79,24 @@ class Segmentor:
             maxWidth = max(int(AD), int(BC))
             maxHeight = max(int(AB), int(CD))
 
-            input_points = np.float32([point_A, point_B, point_C, point_D])
-            output_points = np.float32(
-                [
-                    (0, 0),
-                    (0, maxHeight - 1),
-                    (maxWidth - 1, maxHeight - 1),
-                    (maxWidth - 1, 0),
-                ]
-            )
+            input_points = np.float32([point_A,point_B,point_C,point_D])
+            output_points = np.float32([(0,0), (0, maxHeight-1), (maxWidth-1, maxHeight-1), (maxWidth-1, 0)])
 
+            # transform card to axis-aligned rectangle
             transform = cv2.getPerspectiveTransform(input_points, output_points)
-            output = cv2.warpPerspective(
-                inputImage.copy(),
-                transform,
-                (maxWidth, maxHeight),
-                flags=cv2.INTER_LINEAR,
-            )
+            output = cv2.warpPerspective(inputImage.copy(), transform, (maxWidth, maxHeight), flags=cv2.INTER_LINEAR)
 
             # rotate card
             if output.shape[0] < output.shape[1]:
                 output = cv2.rotate(output, cv2.ROTATE_90_CLOCKWISE)
+                
+            # resize card
             output = cv2.resize(output, (80, 100), interpolation=cv2.INTER_AREA)
             result.append(output)
 
         return result
-
+        
+    
     def get_card_suits(self, cardResult):
         return [
             card[
@@ -111,13 +106,17 @@ class Segmentor:
             for card in cardResult
         ]
 
-    def seg(self, image, get_suits=True):
+    def seg(self, image):
         cardContours = self.get_card_contour(image)
-        cardResult = self.crop_cards(cardContours, image)
-        if not get_suits:
-            return cardResult
+        cardCorners = self.mark_card_corner(cardContours)
+        cardResult = self.crop_cards(cardCorners, image)
         cardSuits = self.get_card_suits(cardResult)
-        return cardSuits
+        
+        return [{
+            'bbox': corner,
+            'card': result,
+            'suit': suit
+            } for corner, result, suit in zip(cardCorners, cardResult, cardSuits)] 
 
 
 if __name__ == "__main__":
@@ -133,12 +132,16 @@ if __name__ == "__main__":
     )
     
     st = time.time()
-    cardSuits = segmentor.seg(inputImage)
+    results = segmentor.seg(inputImage)
     en = time.time()
-    print("time:", en - st)
+    print("usage time:", en - st)
     
-    # cardResult = segmentor.seg(inputImage, get_suits=False)
+    print(results[0]['bbox'])
+    
+    inputImageCorners = inputImage.copy()
+    for result in results:
+        for corner in result['bbox']:
+            cv2.circle(inputImageCorners, corner, 3, (0, 0, 255), -1)
+    cv2.imshow("Corners", inputImageCorners)
 
-    for i in range(len(cardSuits)):
-        cv2.imshow("card" + str(i), cardSuits[i])
     cv2.waitKey(0)
