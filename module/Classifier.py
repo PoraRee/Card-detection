@@ -68,7 +68,7 @@ class Classifier:
 
 def p(img):
     x = cv.cvtColor(img, cv.COLOR_RGB2GRAY)
-    _, x = cv.threshold(x, 200, 255, cv.THRESH_BINARY)
+    _, x = cv.threshold(x, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)
     return x
 
 class Classifier2():
@@ -89,7 +89,7 @@ class Classifier2():
     def get_class(self, inp):
         out = p(inp)
 
-        scores = np.mean(np.power(np.expand_dims(out, 0) - self.templates, 2).reshape(self.templates.shape[0], -1), axis=1)
+        scores = np.mean(np.power(np.expand_dims(out, 0) != self.templates, 2).reshape(self.templates.shape[0], -1), axis=1)
         a_score = np.argmin(scores)
 
         return self.label[a_score]
