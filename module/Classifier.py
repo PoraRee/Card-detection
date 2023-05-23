@@ -74,28 +74,25 @@ def p(img):
 class Classifier2():
     TEMPLATE_PATH = "../bicycleimg_cleaned/"
     
-
-    def get_class(self, inp):
-        out = inp
-        c_score = np.inf
-        c_fn = None
-        c_img = None
-
+    def __init__(self):
+        cache = []
+        self.label = []
         for fn in os.listdir(self.TEMPLATE_PATH):
             timg = cv.imread(os.path.join(self.TEMPLATE_PATH, fn))
             timg = cv.cvtColor(timg, cv.COLOR_BGR2RGB)
-            score = np.mean(np.power(p(timg) - p(out), 2))
-            if score < c_score:
-                c_score = score
-                c_fn = fn
-                c_img = timg
-            timg = timg[::-1,:,:]
-            score = np.mean(np.power(p(timg) - p(out), 2))
-            if score < c_score:
-                c_score = score
-                c_fn = fn
-                c_img = timg
-        return c_fn.split('-')[0]
+            timg = p(timg)
+            cache.append(timg)
+            self.label.append(fn.split('-')[0])
+        self.templates = np.stack(cache)
+
+
+    def get_class(self, inp):
+        out = p(inp)
+
+        scores = np.mean(np.mean(np.power(np.expand_dims(out, 0) - self.templates, 2), axis=2), axis=1)
+        a_score = np.argmin(scores)
+
+        return self.label[a_score]
 
 
 if __name__ == "__main__":
